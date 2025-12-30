@@ -18,9 +18,9 @@
 
 ## 🚀 Демо
 
-**🌐 Живое демо:** [CalorieScan на Streamlit Cloud]([https://your-app.streamlit.app](https://caloriescan123.streamlit.app/))
+**🌐 Живое демо:** [CalorieScan на Streamlit Cloud]([https://your-app.streamlit.app](https://caloriescan123.streamlit.app/)
 
-**📓 Google Colab:** [Демонстрация модели]([https://colab.research.google.com/your-notebook](https://colab.research.google.com/drive/1EuQG9Niok1pQC45_jw1ly3e9BKXXn80n?usp=sharing))
+**📓 Google Colab:** [Демонстрация модели]([https://colab.research.google.com/your-notebook](https://colab.research.google.com/drive/1EuQG9Niok1pQC45_jw1ly3e9BKXXn80n?usp=sharing)
 
 ## 🛠️ Технологии
 
