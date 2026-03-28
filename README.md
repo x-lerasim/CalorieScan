@@ -1,8 +1,5 @@
 #  CalorieScan - AI Счетчик Калорий
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.29.0-red.svg)
-
 **CalorieScan** - веб-приложение для подсчета калорий и анализа пищевой ценности еды по фотографии с использованием искусственного интеллекта.
 
 ##  Описание проекта
