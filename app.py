@@ -2,18 +2,10 @@ import streamlit as st
 from PIL import Image
 import torch
 from transformers import AutoImageProcessor, AutoModelForImageClassification
-import json
 
-# Конфигурация страницы
-st.set_page_config(
-    page_title="CalorieScan - AI Счетчик Калорий",
-    page_icon="🍕",
-    layout="wide"
-)
+st.set_page_config(page_title="CalorieScan - AI Счетчик Калорий", layout="wide")
 
-# База данных калорий (на 100г продукта) - МАКСИМАЛЬНАЯ БАЗА 100+ ПРОДУКТОВ!
 FOOD_DATABASE = {
-    # ========== ОСНОВНЫЕ БЛЮДА ==========
     "pizza": {"calories": 266, "protein": 11, "fat": 10, "carbs": 33, "name": "Пицца"},
     "burger": {"calories": 295, "protein": 17, "fat": 14, "carbs": 24, "name": "Бургер"},
     "cheeseburger": {"calories": 303, "protein": 17, "fat": 15, "carbs": 25, "name": "Чизбургер"},
@@ -29,8 +21,6 @@ FOOD_DATABASE = {
     "wrap": {"calories": 225, "protein": 11, "fat": 9, "carbs": 26, "name": "Ролл"},
     "kebab": {"calories": 195, "protein": 12, "fat": 11, "carbs": 11, "name": "Кебаб"},
     "shawarma": {"calories": 250, "protein": 15, "fat": 14, "carbs": 18, "name": "Шаурма"},
-
-    # ========== МЯСО И ПТИЦА ==========
     "chicken": {"calories": 239, "protein": 27, "fat": 14, "carbs": 0, "name": "Курица"},
     "fried chicken": {"calories": 246, "protein": 19, "fat": 15, "carbs": 9, "name": "Жареная курица"},
     "chicken wings": {"calories": 203, "protein": 30, "fat": 8, "carbs": 0, "name": "Куриные крылышки"},
@@ -46,8 +36,6 @@ FOOD_DATABASE = {
     "turkey": {"calories": 189, "protein": 29, "fat": 7, "carbs": 0, "name": "Индейка"},
     "meatball": {"calories": 197, "protein": 11, "fat": 13, "carbs": 8, "name": "Фрикадельки"},
     "ribs": {"calories": 290, "protein": 23, "fat": 21, "carbs": 0, "name": "Рёбрышки"},
-
-    # ========== РЫБА И МОРЕПРОДУКТЫ ==========
     "fish": {"calories": 206, "protein": 22, "fat": 12, "carbs": 0, "name": "Рыба"},
     "salmon": {"calories": 208, "protein": 20, "fat": 13, "carbs": 0, "name": "Лосось"},
     "tuna": {"calories": 132, "protein": 28, "fat": 1, "carbs": 0, "name": "Тунец"},
@@ -58,8 +46,6 @@ FOOD_DATABASE = {
     "calamari": {"calories": 175, "protein": 15, "fat": 7, "carbs": 15, "name": "Кальмары"},
     "cod": {"calories": 82, "protein": 18, "fat": 0.7, "carbs": 0, "name": "Треска"},
     "mackerel": {"calories": 205, "protein": 19, "fat": 14, "carbs": 0, "name": "Скумбрия"},
-
-    # ========== ГАРНИРЫ ==========
     "rice": {"calories": 130, "protein": 2.7, "fat": 0.3, "carbs": 28, "name": "Рис"},
     "fried rice": {"calories": 163, "protein": 4.5, "fat": 5.5, "carbs": 25, "name": "Жареный рис"},
     "potato": {"calories": 77, "protein": 2, "fat": 0.1, "carbs": 17, "name": "Картофель"},
@@ -70,8 +56,6 @@ FOOD_DATABASE = {
     "couscous": {"calories": 112, "protein": 3.8, "fat": 0.2, "carbs": 23, "name": "Кускус"},
     "quinoa": {"calories": 120, "protein": 4.4, "fat": 1.9, "carbs": 21, "name": "Киноа"},
     "bulgur": {"calories": 83, "protein": 3, "fat": 0.2, "carbs": 19, "name": "Булгур"},
-
-    # ========== ОВОЩИ И САЛАТЫ ==========
     "salad": {"calories": 15, "protein": 1, "fat": 0.2, "carbs": 3, "name": "Салат"},
     "caesar salad": {"calories": 190, "protein": 9, "fat": 16, "carbs": 5, "name": "Цезарь"},
     "greek salad": {"calories": 106, "protein": 3, "fat": 8, "carbs": 6, "name": "Греческий салат"},
@@ -87,15 +71,11 @@ FOOD_DATABASE = {
     "peas": {"calories": 81, "protein": 5, "fat": 0.4, "carbs": 14, "name": "Горошек"},
     "beans": {"calories": 127, "protein": 8.7, "fat": 0.5, "carbs": 23, "name": "Фасоль"},
     "spinach": {"calories": 23, "protein": 2.9, "fat": 0.4, "carbs": 3.6, "name": "Шпинат"},
-
-    # ========== СУПЫ ==========
     "soup": {"calories": 45, "protein": 2, "fat": 1, "carbs": 8, "name": "Суп"},
     "chicken soup": {"calories": 56, "protein": 4, "fat": 1.5, "carbs": 7, "name": "Куриный суп"},
     "tomato soup": {"calories": 74, "protein": 2, "fat": 2.5, "carbs": 11, "name": "Томатный суп"},
     "mushroom soup": {"calories": 93, "protein": 3, "fat": 5, "carbs": 9, "name": "Грибной суп"},
     "miso soup": {"calories": 40, "protein": 2, "fat": 1, "carbs": 5, "name": "Мисо суп"},
-
-    # ========== ЗАВТРАКИ ==========
     "egg": {"calories": 155, "protein": 13, "fat": 11, "carbs": 1, "name": "Яйца"},
     "scrambled eggs": {"calories": 149, "protein": 10, "fat": 11, "carbs": 2, "name": "Яичница"},
     "boiled egg": {"calories": 155, "protein": 13, "fat": 11, "carbs": 1, "name": "Вареное яйцо"},
@@ -107,8 +87,6 @@ FOOD_DATABASE = {
     "cereal": {"calories": 379, "protein": 7, "fat": 4, "carbs": 84, "name": "Хлопья"},
     "oatmeal": {"calories": 68, "protein": 2.4, "fat": 1.4, "carbs": 12, "name": "Овсянка"},
     "granola": {"calories": 471, "protein": 12, "fat": 20, "carbs": 64, "name": "Гранола"},
-
-    # ========== ХЛЕБОБУЛОЧНЫЕ ==========
     "bread": {"calories": 265, "protein": 9, "fat": 3, "carbs": 49, "name": "Хлеб"},
     "white bread": {"calories": 265, "protein": 9, "fat": 3, "carbs": 49, "name": "Белый хлеб"},
     "wheat bread": {"calories": 247, "protein": 13, "fat": 3, "carbs": 41, "name": "Пшеничный хлеб"},
@@ -118,8 +96,6 @@ FOOD_DATABASE = {
     "bun": {"calories": 280, "protein": 8, "fat": 4, "carbs": 51, "name": "Булочка"},
     "roll": {"calories": 276, "protein": 9, "fat": 3, "carbs": 52, "name": "Ролл"},
     "pretzel": {"calories": 380, "protein": 9, "fat": 3, "carbs": 79, "name": "Крендель"},
-
-    # ========== ДЕСЕРТЫ И СЛАДКОЕ ==========
     "dessert": {"calories": 350, "protein": 4, "fat": 15, "carbs": 50, "name": "Десерт"},
     "cake": {"calories": 257, "protein": 4, "fat": 10, "carbs": 40, "name": "Торт"},
     "chocolate cake": {"calories": 352, "protein": 5, "fat": 14, "carbs": 51, "name": "Шоколадный торт"},
@@ -134,8 +110,6 @@ FOOD_DATABASE = {
     "pudding": {"calories": 131, "protein": 3, "fat": 2.8, "carbs": 24, "name": "Пудинг"},
     "tiramisu": {"calories": 240, "protein": 5, "fat": 13, "carbs": 25, "name": "Тирамису"},
     "cupcake": {"calories": 305, "protein": 4, "fat": 13, "carbs": 44, "name": "Капкейк"},
-
-    # ========== ФРУКТЫ ==========
     "fruit": {"calories": 52, "protein": 0.3, "fat": 0.2, "carbs": 14, "name": "Фрукты"},
     "apple": {"calories": 52, "protein": 0.3, "fat": 0.2, "carbs": 14, "name": "Яблоко"},
     "banana": {"calories": 89, "protein": 1.1, "fat": 0.3, "carbs": 23, "name": "Банан"},
@@ -148,16 +122,12 @@ FOOD_DATABASE = {
     "berry": {"calories": 57, "protein": 0.7, "fat": 0.3, "carbs": 14, "name": "Ягоды"},
     "peach": {"calories": 39, "protein": 0.9, "fat": 0.3, "carbs": 10, "name": "Персик"},
     "pear": {"calories": 57, "protein": 0.4, "fat": 0.1, "carbs": 15, "name": "Груша"},
-
-    # ========== НАПИТКИ И ЖИДКИЕ БЛЮДА ==========
     "smoothie": {"calories": 150, "protein": 3, "fat": 2, "carbs": 30, "name": "Смузи"},
     "juice": {"calories": 45, "protein": 0.5, "fat": 0.1, "carbs": 11, "name": "Сок"},
     "milkshake": {"calories": 223, "protein": 8, "fat": 9, "carbs": 28, "name": "Молочный коктейль"},
     "coffee": {"calories": 2, "protein": 0.3, "fat": 0, "carbs": 0, "name": "Кофе"},
     "latte": {"calories": 103, "protein": 6, "fat": 4, "carbs": 11, "name": "Латте"},
     "cappuccino": {"calories": 74, "protein": 4, "fat": 4, "carbs": 6, "name": "Капучино"},
-
-    # ========== АЗИАТСКАЯ КУХНЯ ==========
     "sushi": {"calories": 143, "protein": 6, "fat": 3.7, "carbs": 21, "name": "Суши"},
     "sashimi": {"calories": 127, "protein": 20, "fat": 5, "carbs": 0, "name": "Сашими"},
     "ramen": {"calories": 188, "protein": 7.9, "fat": 7, "carbs": 27, "name": "Рамен"},
@@ -168,8 +138,6 @@ FOOD_DATABASE = {
     "dumpling": {"calories": 175, "protein": 7, "fat": 6, "carbs": 23, "name": "Пельмени"},
     "tempura": {"calories": 130, "protein": 3, "fat": 5, "carbs": 18, "name": "Темпура"},
     "teriyaki": {"calories": 170, "protein": 18, "fat": 6, "carbs": 12, "name": "Терияки"},
-
-    # ========== РАЗНОЕ ==========
     "cheese": {"calories": 402, "protein": 25, "fat": 33, "carbs": 1.3, "name": "Сыр"},
     "mozzarella": {"calories": 280, "protein": 28, "fat": 17, "carbs": 3, "name": "Моцарелла"},
     "cheddar": {"calories": 403, "protein": 25, "fat": 33, "carbs": 1.3, "name": "Чеддер"},
@@ -185,10 +153,8 @@ FOOD_DATABASE = {
 }
 
 
-# Кэширование модели
 @st.cache_resource
 def load_model():
-    """Загрузка модели классификации еды"""
     model_name = "nateraw/food"
     try:
         processor = AutoImageProcessor.from_pretrained(model_name)
@@ -200,17 +166,13 @@ def load_model():
 
 
 def classify_food(image, processor, model):
-    """Классификация изображения еды"""
     try:
         inputs = processor(images=image, return_tensors="pt")
         outputs = model(**inputs)
         logits = outputs.logits
         predicted_class = logits.argmax(-1).item()
         confidence = torch.nn.functional.softmax(logits, dim=-1)[0][predicted_class].item()
-
-        # Получаем название класса
         label = model.config.id2label[predicted_class].lower()
-
         return label, confidence
     except Exception as e:
         st.error(f"Ошибка классификации: {e}")
@@ -218,23 +180,18 @@ def classify_food(image, processor, model):
 
 
 def get_nutrition_info(food_label, portion_size=200):
-    """Получение информации о калориях и БЖУ"""
     food_label_lower = food_label.lower()
 
-    # Сначала ищем точное совпадение
     if food_label_lower in FOOD_DATABASE:
         food_data = FOOD_DATABASE[food_label_lower].copy()
     else:
-        # Ищем частичное совпадение (ключевые слова)
         food_data = None
         for key in FOOD_DATABASE.keys():
             if key in food_label_lower or food_label_lower in key:
                 food_data = FOOD_DATABASE[key].copy()
                 break
 
-        # Если не найдено - используем название модели с средними значениями
         if food_data is None:
-            # Красиво форматируем название
             formatted_name = food_label.replace('_', ' ').title()
             food_data = {
                 "name": f"{formatted_name} (приблизительно)",
@@ -244,7 +201,6 @@ def get_nutrition_info(food_label, portion_size=200):
                 "carbs": 25
             }
 
-    # Пересчитываем на указанную порцию
     multiplier = portion_size / 100
     food_data["calories"] = round(food_data["calories"] * multiplier)
     food_data["protein"] = round(food_data["protein"] * multiplier, 1)
@@ -254,31 +210,28 @@ def get_nutrition_info(food_label, portion_size=200):
     return food_data
 
 
-# Заголовок приложения
-st.title("🍕 CalorieScan - AI Счетчик Калорий")
+st.title("CalorieScan - AI Счетчик Калорий")
 st.markdown("### Загрузите фото еды и узнайте калорийность!")
 
-# Боковая панель с информацией
 with st.sidebar:
-    st.header("ℹ️ О приложении")
+    st.header("О приложении")
     st.write(f"""
     **CalorieScan** использует AI для:
-    - 🔍 Распознавания еды на фото
-    - 📊 Подсчета калорий и БЖУ
-    - 💡 Рекомендаций по питанию
+    - Распознавания еды на фото
+    - Подсчета калорий и БЖУ
+    - Рекомендаций по питанию
 
     **Модель:** HuggingFace Food Classification
-    **База продуктов:** {len(FOOD_DATABASE)} категорий еды! 🎉
+    **База продуктов:** {len(FOOD_DATABASE)} категорий еды
     """)
 
-    st.header("⚙️ Настройки")
+    st.header("Настройки")
     portion_size = st.slider("Размер порции (г)", 50, 500, 200, 50)
 
-# Основной интерфейс
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.subheader("📸 Загрузите фото")
+    st.subheader("Загрузите фото")
     uploaded_file = st.file_uploader("Выберите изображение", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
@@ -286,44 +239,36 @@ with col1:
         st.image(image, caption="Загруженное фото", use_container_width=True)
 
 with col2:
-    st.subheader("📊 Результаты анализа")
+    st.subheader("Результаты анализа")
 
     if uploaded_file:
-        with st.spinner("🤖 Анализирую фото..."):
-            # Загружаем модель
+        with st.spinner("Анализирую фото..."):
             processor, model = load_model()
 
             if processor and model:
-                # Классифицируем
                 food_label, confidence = classify_food(image, processor, model)
 
                 if food_label:
-                    # Получаем информацию о питательности
                     nutrition = get_nutrition_info(food_label, portion_size)
 
-                    st.success(f"✅ Обнаружено: **{nutrition['name']}**")
+                    st.success(f"Обнаружено: **{nutrition['name']}**")
 
-                    # Показываем оригинальное название модели если оно отличается
                     formatted_model_name = food_label.replace('_', ' ').title()
                     if formatted_model_name.lower() not in nutrition['name'].lower():
-                        st.info(f"🔍 Модель распознала как: *{formatted_model_name}*")
+                        st.info(f"Модель распознала как: *{formatted_model_name}*")
 
-                    st.info(f"🎯 Уверенность модели: **{confidence * 100:.1f}%**")
+                    st.info(f"Уверенность модели: **{confidence * 100:.1f}%**")
+                    st.metric("Калории", f"{nutrition['calories']} ккал")
 
-                    # Отображаем калории
-                    st.metric("🔥 Калории", f"{nutrition['calories']} ккал")
-
-                    # БЖУ в трех колонках
                     col_p, col_f, col_c = st.columns(3)
                     with col_p:
-                        st.metric("🥩 Белки", f"{nutrition['protein']}г")
+                        st.metric("Белки", f"{nutrition['protein']}г")
                     with col_f:
-                        st.metric("🧈 Жиры", f"{nutrition['fat']}г")
+                        st.metric("Жиры", f"{nutrition['fat']}г")
                     with col_c:
-                        st.metric("🍞 Углеводы", f"{nutrition['carbs']}г")
+                        st.metric("Углеводы", f"{nutrition['carbs']}г")
 
-                    # График БЖУ
-                    st.subheader("📈 Состав БЖУ")
+                    st.subheader("Состав БЖУ")
                     chart_data = {
                         "Белки": nutrition['protein'],
                         "Жиры": nutrition['fat'],
@@ -331,21 +276,19 @@ with col2:
                     }
                     st.bar_chart(chart_data)
 
-                    # Рекомендации
-                    st.subheader("💡 Рекомендации")
+                    st.subheader("Рекомендации")
                     if nutrition['calories'] > 400:
-                        st.warning("⚠️ Высококалорийное блюдо. Подходит для основного приема пищи.")
+                        st.warning("Высококалорийное блюдо. Подходит для основного приема пищи.")
                     elif nutrition['calories'] < 100:
-                        st.info("✅ Легкое блюдо. Отлично для перекуса!")
+                        st.info("Легкое блюдо. Отлично для перекуса!")
                     else:
-                        st.success("✅ Сбалансированное блюдо.")
+                        st.success("Сбалансированное блюдо.")
     else:
-        st.info("👆 Загрузите фото еды для анализа")
+        st.info("Загрузите фото еды для анализа")
 
-# Футер
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center'>
-    <p>🎓 Проект "ПрогИнжМ" | Сделано с ❤️ используя Streamlit и HuggingFace</p>
+    <p>Проект "ПрогИнжМ" | Сделано с использованием Streamlit и HuggingFace</p>
 </div>
 """, unsafe_allow_html=True)
