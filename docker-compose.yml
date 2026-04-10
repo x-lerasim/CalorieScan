@@ -1,0 +1,24 @@
+services:
+  server:
+    build:
+      context: ./server
+    container_name: caloriescan-server
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_MODEL=nateraw/food
+      - CORS_ORIGIN=http://localhost:5173
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://localhost:4000
+    container_name: caloriescan-client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
