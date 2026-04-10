@@ -21,10 +21,14 @@ router.post("/", upload.single("image"), async (req, res, next) => {
     if (!req.file) {
       return res.status(400).json({ error: "Image file is required (field name: image)" });
     }
-    const portion = Number(req.body.portion) || 200;
+    const rawPortion = req.body.portion;
+    const portionRequested =
+      rawPortion === undefined || rawPortion === "" || rawPortion === null
+        ? undefined
+        : Number(rawPortion);
     const { label, confidence } = await classifyImage(req.file.buffer);
     const food = findFoodData(label);
-    const nutrition = scaleByPortion(food, portion);
+    const nutrition = scaleByPortion(food, portionRequested);
     const recommendation = buildRecommendation(nutrition.calories);
     res.json({
       label,

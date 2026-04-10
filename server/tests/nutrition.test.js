@@ -10,6 +10,21 @@ describe("findFoodData", () => {
     expect(food.matched).toBe(true);
     expect(food.name).toBe("Пицца");
     expect(food.calories).toBe(266);
+    expect(food.defaultPortion).toBe(300);
+  });
+
+  test("returns default portion for fruit", () => {
+    expect(findFoodData("apple").defaultPortion).toBe(180);
+    expect(findFoodData("banana").defaultPortion).toBe(120);
+  });
+
+  test("returns default portion for small items", () => {
+    expect(findFoodData("butter").defaultPortion).toBe(15);
+    expect(findFoodData("nuts").defaultPortion).toBe(30);
+  });
+
+  test("default portion falls back to 200 for unknown labels", () => {
+    expect(findFoodData("unknown_food_xyz").defaultPortion).toBe(200);
   });
 
   test("matches case-insensitively", () => {
@@ -55,11 +70,41 @@ describe("scaleByPortion", () => {
     expect(scaled.protein).toBe(5);
   });
 
-  test("defaults to 200g when portion is missing", () => {
+  test("uses food.defaultPortion when portion is missing", () => {
+    const base = {
+      name: "Test",
+      matched: true,
+      calories: 100,
+      protein: 1,
+      fat: 1,
+      carbs: 1,
+      defaultPortion: 300
+    };
+    const scaled = scaleByPortion(base);
+    expect(scaled.portionSize).toBe(300);
+    expect(scaled.calories).toBe(300);
+    expect(scaled.portionAuto).toBe(true);
+  });
+
+  test("marks manual portion as non-auto", () => {
+    const base = {
+      name: "Test",
+      matched: true,
+      calories: 100,
+      protein: 1,
+      fat: 1,
+      carbs: 1,
+      defaultPortion: 300
+    };
+    const scaled = scaleByPortion(base, 150);
+    expect(scaled.portionSize).toBe(150);
+    expect(scaled.portionAuto).toBe(false);
+  });
+
+  test("falls back to 200g when no defaultPortion and no input", () => {
     const base = { name: "Test", matched: true, calories: 100, protein: 1, fat: 1, carbs: 1 };
     const scaled = scaleByPortion(base);
     expect(scaled.portionSize).toBe(200);
-    expect(scaled.calories).toBe(200);
   });
 });
 

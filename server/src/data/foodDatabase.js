@@ -144,4 +144,91 @@ const FOOD_DATABASE = {
   "guacamole": { calories: 161, protein: 2, fat: 15, carbs: 9, name: "Гуакамоле" }
 };
 
-module.exports = { FOOD_DATABASE };
+const PORTION_RULES = [
+  { keys: ["pizza"], portion: 300 },
+  { keys: ["burger", "cheeseburger", "hamburger"], portion: 250 },
+  { keys: ["hot dog"], portion: 150 },
+  { keys: ["taco", "burrito", "quesadilla", "wrap"], portion: 220 },
+  { keys: ["shawarma", "kebab"], portion: 300 },
+  { keys: ["sandwich"], portion: 200 },
+  { keys: ["pasta", "spaghetti", "lasagna"], portion: 300 },
+  { keys: ["ramen", "udon", "pad thai", "noodles"], portion: 400 },
+  { keys: ["fried rice", "rice"], portion: 200 },
+  { keys: ["sushi", "sashimi"], portion: 180 },
+  { keys: ["dumpling"], portion: 250 },
+  { keys: ["spring roll"], portion: 100 },
+  { keys: ["tempura"], portion: 180 },
+  { keys: ["teriyaki"], portion: 250 },
+  { keys: ["steak", "beef", "pork", "pork chop", "lamb", "duck"], portion: 250 },
+  { keys: ["turkey"], portion: 200 },
+  { keys: ["fried chicken", "chicken wings"], portion: 200 },
+  { keys: ["chicken breast", "chicken"], portion: 200 },
+  { keys: ["meatball"], portion: 150 },
+  { keys: ["ribs"], portion: 300 },
+  { keys: ["sausage"], portion: 100 },
+  { keys: ["bacon"], portion: 50 },
+  { keys: ["salmon", "tuna", "cod", "mackerel", "fish"], portion: 200 },
+  { keys: ["shrimp", "lobster", "crab", "calamari"], portion: 150 },
+  { keys: ["oyster"], portion: 100 },
+  { keys: ["fries"], portion: 150 },
+  { keys: ["mashed potato", "baked potato", "sweet potato", "potato"], portion: 200 },
+  { keys: ["couscous", "quinoa", "bulgur"], portion: 200 },
+  { keys: ["caesar salad", "greek salad", "salad"], portion: 200 },
+  { keys: ["vegetables"], portion: 200 },
+  {
+    keys: [
+      "broccoli",
+      "carrot",
+      "tomato",
+      "cucumber",
+      "pepper",
+      "onion",
+      "mushroom",
+      "corn",
+      "peas",
+      "beans",
+      "spinach"
+    ],
+    portion: 150
+  },
+  {
+    keys: ["chicken soup", "tomato soup", "mushroom soup", "miso soup", "soup"],
+    portion: 300
+  },
+  { keys: ["scrambled eggs", "omelette"], portion: 150 },
+  { keys: ["boiled egg", "egg"], portion: 100 },
+  { keys: ["pancake", "waffle", "french toast"], portion: 150 },
+  { keys: ["oatmeal", "cereal", "granola"], portion: 200 },
+  { keys: ["white bread", "wheat bread", "toast", "bread"], portion: 50 },
+  { keys: ["croissant", "bagel", "muffin", "bun", "pretzel"], portion: 80 },
+  { keys: ["cake", "chocolate cake", "cheesecake", "brownie", "pie", "cupcake", "tiramisu"], portion: 120 },
+  { keys: ["cookie", "donut"], portion: 60 },
+  { keys: ["ice cream", "pudding"], portion: 100 },
+  { keys: ["chocolate", "candy"], portion: 40 },
+  { keys: ["dessert"], portion: 120 },
+  { keys: ["apple", "pear", "peach", "orange"], portion: 180 },
+  { keys: ["banana"], portion: 120 },
+  { keys: ["watermelon", "pineapple", "mango"], portion: 200 },
+  { keys: ["grape", "strawberry", "berry"], portion: 150 },
+  { keys: ["fruit"], portion: 150 },
+  { keys: ["smoothie", "juice", "milkshake"], portion: 250 },
+  { keys: ["latte", "cappuccino"], portion: 200 },
+  { keys: ["coffee"], portion: 200 },
+  { keys: ["yogurt", "milk"], portion: 200 },
+  { keys: ["mozzarella", "cheddar", "cheese"], portion: 50 },
+  { keys: ["butter"], portion: 15 },
+  { keys: ["nuts", "peanut", "almond"], portion: 30 },
+  { keys: ["hummus", "guacamole"], portion: 50 },
+  { keys: ["avocado"], portion: 100 }
+];
+
+function getDefaultPortion(key) {
+  if (!key) return 200;
+  const normalized = String(key).toLowerCase().trim();
+  for (const rule of PORTION_RULES) {
+    if (rule.keys.includes(normalized)) return rule.portion;
+  }
+  return 200;
+}
+
+module.exports = { FOOD_DATABASE, getDefaultPortion };
