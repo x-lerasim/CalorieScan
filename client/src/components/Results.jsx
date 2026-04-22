@@ -16,6 +16,13 @@ export default function Results({ data }) {
             Модель: <em>{label}</em> · Уверенность{" "}
             <strong>{(confidence * 100).toFixed(1)}%</strong>
           </p>
+          <p className="detection-meta">
+            Порция:{" "}
+            <strong>
+              {nutrition.portionSize} г
+              {nutrition.portionAuto ? " (определено автоматически)" : ""}
+            </strong>
+          </p>
         </div>
       </div>
 

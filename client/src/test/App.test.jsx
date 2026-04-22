@@ -29,18 +29,19 @@ describe("App", () => {
     expect(analyzeImage).not.toHaveBeenCalled();
   });
 
-  test("analyzes file and renders results", async () => {
+  test("analyzes file with auto portion by default", async () => {
     analyzeImage.mockResolvedValue({
       label: "pizza",
       confidence: 0.95,
       nutrition: {
         name: "Пицца",
         matched: true,
-        calories: 532,
-        protein: 22,
-        fat: 20,
-        carbs: 66,
-        portionSize: 200
+        calories: 798,
+        protein: 33,
+        fat: 30,
+        carbs: 99,
+        portionSize: 300,
+        portionAuto: true
       },
       recommendation: { level: "warning", text: "Высококалорийное блюдо." }
     });
@@ -58,11 +59,48 @@ describe("App", () => {
     await waitFor(() => {
       expect(analyzeImage).toHaveBeenCalledTimes(1);
     });
+    expect(analyzeImage).toHaveBeenCalledWith(file, undefined);
     await waitFor(() => {
       expect(screen.getByTestId("results")).toBeInTheDocument();
     });
     expect(screen.getByText("Пицца")).toBeInTheDocument();
-    expect(screen.getByText("532")).toBeInTheDocument();
+    expect(screen.getByText("798")).toBeInTheDocument();
+    expect(screen.getByText(/определено автоматически/)).toBeInTheDocument();
+  });
+
+  test("sends manual portion when auto toggle is disabled", async () => {
+    analyzeImage.mockResolvedValue({
+      label: "pizza",
+      confidence: 0.9,
+      nutrition: {
+        name: "Пицца",
+        matched: true,
+        calories: 532,
+        protein: 22,
+        fat: 20,
+        carbs: 66,
+        portionSize: 200,
+        portionAuto: false
+      },
+      recommendation: { level: "warning", text: "Высококалорийное блюдо." }
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    const toggle = screen.getByTestId("auto-portion-toggle");
+    await user.click(toggle);
+
+    const file = new File(["fake"], "pizza.jpg", { type: "image/jpeg" });
+    const input = screen.getByTestId("file-input");
+    await user.upload(input, file);
+
+    const analyzeBtn = screen.getByRole("button", { name: /Проанализировать/ });
+    await waitFor(() => expect(analyzeBtn).not.toBeDisabled());
+    await user.click(analyzeBtn);
+
+    await waitFor(() => {
+      expect(analyzeImage).toHaveBeenCalledWith(file, 200);
+    });
   });
 
   test("shows error message when API rejects", async () => {

@@ -3,7 +3,9 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 export async function analyzeImage(file, portion) {
   const formData = new FormData();
   formData.append("image", file);
-  formData.append("portion", String(portion));
+  if (portion !== undefined && portion !== null && portion !== "") {
+    formData.append("portion", String(portion));
+  }
 
   const response = await fetch(`${API_BASE}/api/analyze`, {
     method: "POST",

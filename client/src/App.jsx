@@ -5,6 +5,7 @@ import { analyzeImage } from "./api.js";
 
 export default function App() {
   const [file, setFile] = useState(null);
+  const [autoPortion, setAutoPortion] = useState(true);
   const [portion, setPortion] = useState(200);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -32,8 +33,11 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const result = await analyzeImage(file, portion);
+      const result = await analyzeImage(file, autoPortion ? undefined : portion);
       setData(result);
+      if (result?.nutrition?.portionSize) {
+        setPortion(result.nutrition.portionSize);
+      }
     } catch (err) {
       setError(err.message || "Не удалось проанализировать изображение");
     } finally {
@@ -45,6 +49,7 @@ export default function App() {
     setFile(null);
     setData(null);
     setError(null);
+    setAutoPortion(true);
   };
 
   return (
@@ -66,19 +71,34 @@ export default function App() {
           />
 
           <div className="controls">
-            <label htmlFor="portion">
-              Размер порции: <strong>{portion} г</strong>
+            <label className="auto-toggle">
+              <input
+                type="checkbox"
+                checked={autoPortion}
+                onChange={(e) => setAutoPortion(e.target.checked)}
+                disabled={loading}
+                data-testid="auto-portion-toggle"
+              />
+              <span>Определять размер порции автоматически</span>
             </label>
-            <input
-              id="portion"
-              type="range"
-              min="50"
-              max="500"
-              step="50"
-              value={portion}
-              onChange={(e) => setPortion(Number(e.target.value))}
-              disabled={loading}
-            />
+
+            {!autoPortion && (
+              <>
+                <label htmlFor="portion">
+                  Размер порции: <strong>{portion} г</strong>
+                </label>
+                <input
+                  id="portion"
+                  type="range"
+                  min="50"
+                  max="500"
+                  step="50"
+                  value={portion}
+                  onChange={(e) => setPortion(Number(e.target.value))}
+                  disabled={loading}
+                />
+              </>
+            )}
 
             <div className="buttons">
               <button

@@ -48,7 +48,7 @@ describe("POST /api/analyze", () => {
     classifyImage.mockReset();
   });
 
-  test("returns nutrition for classified image", async () => {
+  test("returns nutrition with manual portion", async () => {
     classifyImage.mockResolvedValue({ label: "pizza", confidence: 0.95 });
     const res = await request(app)
       .post("/api/analyze")
@@ -59,7 +59,30 @@ describe("POST /api/analyze", () => {
     expect(res.body.confidence).toBeCloseTo(0.95);
     expect(res.body.nutrition.name).toBe("Пицца");
     expect(res.body.nutrition.calories).toBe(532);
+    expect(res.body.nutrition.portionSize).toBe(200);
+    expect(res.body.nutrition.portionAuto).toBe(false);
     expect(res.body.recommendation.level).toBe("warning");
+  });
+
+  test("auto-determines portion when not provided", async () => {
+    classifyImage.mockResolvedValue({ label: "pizza", confidence: 0.9 });
+    const res = await request(app)
+      .post("/api/analyze")
+      .attach("image", Buffer.from("fake"), "food.jpg");
+    expect(res.status).toBe(200);
+    expect(res.body.nutrition.portionSize).toBe(300);
+    expect(res.body.nutrition.portionAuto).toBe(true);
+    expect(res.body.nutrition.calories).toBe(798);
+  });
+
+  test("auto-determines portion for small foods", async () => {
+    classifyImage.mockResolvedValue({ label: "butter", confidence: 0.9 });
+    const res = await request(app)
+      .post("/api/analyze")
+      .attach("image", Buffer.from("fake"), "food.jpg")
+      .field("portion", "");
+    expect(res.body.nutrition.portionSize).toBe(15);
+    expect(res.body.nutrition.portionAuto).toBe(true);
   });
 
   test("returns 400 when image is missing", async () => {
